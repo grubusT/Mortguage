@@ -8,9 +8,13 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 """
 
 import os
+import sys
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mortgauge_project.settings')
+# Add the project root directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.mortgauge_project.settings')
 
 application = get_asgi_application()
