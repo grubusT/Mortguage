@@ -1,1 +1,1 @@
-web: cd backend && gunicorn mortgauge_project.wsgi:application --bind 0.0.0.0:$PORT --pythonpath mortgauge_project 
+web: gunicorn mortgauge_project.wsgi:application --bind 0.0.0.0:$PORT 
