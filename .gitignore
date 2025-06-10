@@ -55,4 +55,7 @@ yarn-error.log*
 
 # Build
 /build
-/dist 
+/dist
+
+# Documentation
+PROJECT_NOTES.md 
