@@ -5,9 +5,8 @@ set -o errexit
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Add backend directory to PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
-
 # Run migrations
-cd backend
-python manage.py migrate 
+python manage.py migrate
+
+# Collect static files
+python manage.py collectstatic --no-input 
