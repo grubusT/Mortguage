@@ -1,25 +1,21 @@
 #!/bin/bash
 
-echo "Starting build process..."
+echo "Starting build process for Render..."
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
-# Install Node.js dependencies
-echo "Installing Node.js dependencies..."
-npm install
-
-# Build Next.js frontend
-echo "Building Next.js frontend..."
-npm run build
-
-# Run Django migrations (if needed)
+# Run Django migrations
 echo "Running Django migrations..."
 python manage.py migrate --noinput
 
 # Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
+
+# Create superuser if needed (optional)
+# echo "Creating superuser..."
+# python manage.py createsuperuser --noinput --username admin --email admin@example.com || true
 
 echo "Build completed successfully!"

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,15 +28,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-fallback-key-change
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']  # For Vercel deployment
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "https://v0.dev",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-CORS_ALLOW_ALL_ORIGINS = True  # For development - remove in production
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in debug mode
 CORS_ALLOW_CREDENTIALS = True
 
 
@@ -92,29 +89,32 @@ WSGI_APPLICATION = 'mortgauge_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Database configuration for Neon (using environment variables from v0)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'postgres'),
-        'USER': os.getenv('PGUSER', 'postgres'),
-        'PASSWORD': os.getenv('PGPASSWORD', ''),
-        'HOST': os.getenv('PGHOST', 'localhost'),
-        'PORT': os.getenv('PGPORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-        'CONN_MAX_AGE': 0,  # Don't persist connections in serverless
-        'CONN_HEALTH_CHECKS': True,
-        'ATOMIC_REQUESTS': False,  # Disable for serverless
-    }
-}
+# Use DATABASE_URL from environment (Render provides this)
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-# For Vercel serverless environment
-if 'VERCEL' in os.environ:
-    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
-    DATABASES['default']['CONN_MAX_AGE'] = 0
-    DATABASES['default']['ATOMIC_REQUESTS'] = False
+if DATABASE_URL:
+    # Parse DATABASE_URL for Render
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
+    }
+else:
+    # Fallback to local development database
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('PGDATABASE', 'postgres'),
+            'USER': os.getenv('PGUSER', 'postgres'),
+            'PASSWORD': os.getenv('PGPASSWORD', ''),
+            'HOST': os.getenv('PGHOST', 'localhost'),
+            'PORT': os.getenv('PGPORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+            'CONN_MAX_AGE': 0,
+            'CONN_HEALTH_CHECKS': True,
+            'ATOMIC_REQUESTS': False,
+        }
+    }
 
 
 # Password validation
@@ -154,7 +154,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# For Vercel deployment - simplified static files
+# For Render deployment - collect static files
 STATICFILES_DIRS = []
 
 # Default primary key field type
