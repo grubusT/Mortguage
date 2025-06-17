@@ -19,19 +19,60 @@ django.setup()
 # Import the WSGI application
 from mortgauge_project.wsgi import application
 
-# Vercel serverless function handler
 def handler(request, context):
     """
-    Vercel serverless function handler
+    Vercel serverless function handler for Django
     """
     try:
-        return application(request, lambda status, headers: None)
+        # Create a simple WSGI environment
+        environ = {
+            'REQUEST_METHOD': request.get('method', 'GET'),
+            'SCRIPT_NAME': '',
+            'PATH_INFO': request.get('path', '/'),
+            'QUERY_STRING': request.get('query', ''),
+            'SERVER_NAME': 'localhost',
+            'SERVER_PORT': '80',
+            'SERVER_PROTOCOL': 'HTTP/1.1',
+            'wsgi.version': (1, 0),
+            'wsgi.url_scheme': 'http',
+            'wsgi.input': None,
+            'wsgi.errors': sys.stderr,
+            'wsgi.multithread': False,
+            'wsgi.multiprocess': False,
+            'wsgi.run_once': True,
+        }
+        
+        # Add headers
+        headers = request.get('headers', {})
+        for key, value in headers.items():
+            environ[f'HTTP_{key.upper().replace("-", "_")}'] = value
+        
+        # Call Django application
+        def start_response(status, headers, exc_info=None):
+            return status, headers
+        
+        response = application(environ, start_response)
+        
+        # Convert response to Vercel format
+        status_code = int(response[0].split()[0])
+        response_headers = dict(response[1])
+        body = b''.join(response[2]).decode('utf-8')
+        
+        return {
+            'statusCode': status_code,
+            'body': body,
+            'headers': response_headers
+        }
+        
     except Exception as e:
         # Log the error for debugging
         print(f"Error in handler: {e}")
+        import traceback
+        traceback.print_exc()
+        
         return {
             'statusCode': 500,
-            'body': 'Internal Server Error',
+            'body': f'Internal Server Error: {str(e)}',
             'headers': {'Content-Type': 'text/plain'}
         }
 
